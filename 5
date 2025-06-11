@@ -1,58 +1,28 @@
 import gensim.downloader as api
+model=api.load("word2vec-google-news-300")
 import openai
 
-
-print("Loading Model...")
-model = apiload("word2vec-google-news")
-print("Model Loaded")
-openai.api_key=""
-
-def generate_similar_words(seed_word,top_n=5):
+def get_similar(seed_word,top_n=5):
     try:
-        similar = model.most_similar(seed_word,topn=top_n)
-        return [word for word,score in similar]
+        return[w for w,score in model.most_similar(seed_word,topn=top_n)]
     except KeyError:
-        return f"Couldn't find similar words to {seed_word}"
-    return []
+        return []
+def generate_para(user_inp, similar_words):
+    word_str1=','.join(similar_words)
+    prompt=(f"create simple and creative paragraph using{user_inp},"
+              f"and use related words as start points{word_str1}"
+              f" it should be concise and clear  "
+            )
+    print(prompt)
+    openai.api_key=""
+    response=openai.chat.completions.create(model='gpt-4o-mini',messages=[{"role":"system","content":"you are creative writer"},
+                                                                           {"role":"user","content": prompt}],temperature=0.7,max_tokens=100)
+    return response.choices[0].message.content 
 
-def generate_paragraph_using_gpt(seed_word,similar_word):
-    word_str = ','.join(similar_words)
-    prompt=(
-     f"Write a simple and creative sentence using '{seed_word}',"
-     f"and use these related words as starting point {word_str}."
-     f"Write a paragraph that is consice and clear."
-    )
-
-    response = openai.chat.completions.create(
-        model="gpt-4.0-mini",
-        messages=[
-            {"role":"system","content":"You are a creative writer"}
-            {"role":"user","content":prompt}
-        ],
-        temperature=0.8,
-        max_tokens=150
-    )
-    return response.choices[0].message.contents.strip()
-
-
-def main():
-    seed_word=input("Enter seed word").lower().strip()
-    similar_words=generate_similar_words(seed_word)
-
-    if not similar_words:
-        print("Similar words are not presents")
-        return
-
-    print(f"Similar words are :{similar_words}")
-
-    paragraph = generate_paragraph_using_gpt(seed_word,similar_words)
-    print("Generated paragraph")
-    print(paragraph)
-
-
-
-if __name__ == "__main__":
-    main()
+inp=input("enter seed ")
+sim=get_similar(inp)
+res=generate_para(inp,sim)
+print(res)
 
 
 
