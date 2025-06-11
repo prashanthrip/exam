@@ -1,0 +1,31 @@
+import gensim.downloader as api
+import openai
+word2vec_model=api.load("word2vec-google-news-300")
+def get_similar_words(word,top_n=3):
+    try:
+        return [w for w, _ in word2vec_model.most_similar(word,topn=top_n)]
+    except KeyError:
+        return [word]
+original_prompt="Generate a detailed story about an astronaut exploring a diatant exoplanet"
+keywords=["astronaut","exploring","diatant","exoplanet"]
+expanded_prompt=original_prompt
+for word in keywords:
+    similar_words=get_similar_words(word)
+    expanded_prompt=expanded_prompt.replace(word,f"{word}({','.join(similar_words)})")
+print("Original_prompt:",original_prompt)
+print("Expanded_prompt:",expanded_prompt)
+openai.api_key=""
+import openai
+client=openai.OpenAI(api_key="")
+response_enriched=client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role":"user","content":expanded_prompt}]
+)
+response_original=client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role":"user","content":original_prompt}]
+)
+print("\nResponse to Original Prompt:\n",response_original.choices[0].message.content)
+print("\nResponse to Enriched Prompt:\n",response_enriched.choices[0].message.content)
+
+
