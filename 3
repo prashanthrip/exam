@@ -1,0 +1,57 @@
+import gensim
+import string
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from gensim.models import Word2Vec
+
+medical_corpus=[
+    "Diabetes is a chronic disease it affects way in which affects way in which blood sugar is processed.",
+    "Hypertension and high blood pressure causes heart disaese and stroke.",
+    "A patient diagonised with pneumonia is prescribed with antibotics.",
+    "Insulin therapy is used for type 1 diabetes .",
+    "Cardiovasular disaese is leading cause of death worldwide."
+]
+
+nltk.download("punkt")
+nltk.download("stopwords")
+
+stop_words = set(stopwords.words("english"))
+processed_corpus=[]
+
+for sentence in medical_corpus :
+  tokens = word_tokenize(sentence.lower())
+  tokens = [word for word in tokens if word not in stop_words and word not in string.punctuation]
+  processed_corpus.append(tokens)
+
+word2vec_model=Word2Vec(sentences=processed_corpus,vector_size=300,window=5,min_count=1,workers=4)
+word2vec_model.save("medical_word2vec.model")
+word2vec_model=Word2Vec.load("medical_word2vec.model")
+
+print("Vocabulary",list(word2vec_model.wv.index_to_key))
+
+print("Similar words to 'diabetes':",word2vec_model.wv.most_similar('diabetes'))
+
+result = word2vec_model.wv.most_similar(positive=['hypertension','heart'],negative='stroke')
+print(f"Arithmetic Result{result}")
+
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+
+words = list(word2vec_model.wv.index_to_key)
+word_vectors=[word2vec_model.wv[word] for word in words]
+pca =PCA(n_components=2)
+reduced_vectors=pca.fit_transform(word_vectors)
+plt.figure(figsize=(8,6))
+for i,word in enumerate(words):
+  plt.scatter(reduced_vectors[i,0],reduced_vectors[i,1])
+  plt.annotate(word,(reduced_vectors[i,0],reduced_vectors[i,1]))
+plt.title("2D PCA")
+plt.show()
+
+
+
+
+
+
+
