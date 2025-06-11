@@ -1,72 +1,50 @@
 from pydantic import BaseModel
-from typing import List,Optional
+from typing import Optional, List
 import wikipedia
-import re
+
 
 class InstitutionDetails(BaseModel):
-    name : str
-    founder : Optional[str]
-    founded_year :Optional[str]
-    branches : Optional[List[str]]
-    number_of_employees : Optional[str]
-    summary : str
+    name: str
+    founder: Optional[str] = None
+    founded_year: Optional[str] = None
+    branches: Optional[List[str]] = None
+    number_of_employees: Optional[str] = None
+    summary: str
 
-def extract_institution_details(institution_name :str)->InstitutionDetails :
+
+def extract_institution_details(name: str, summary: str) -> InstitutionDetails:
+    """Extract structured details from a Wikipedia summary."""
+    return InstitutionDetails(
+        name=name,
+        founder=None,
+        founded_year=None,
+        branches=None,
+        number_of_employees=None,
+        summary=summary,
+    )
+
+
+def main() -> None:
+    institution = input("Enter institution name: ")
     try:
-        page = wikipedia.page(institution_name)
-        summary = wikipedia.summary(institution_name,sentences = 4)
-        content=page.content
-    
-        founder = None
-        founded_year = None
-        branches = []
-        employees = None
-    
-        lines = content.split("\n")
-        for line in lines :
-            line_lower = line.lower()
-            if "founder"  in line_lower and not founder :
-                match = re.search(r"(?i)founder(?:s)?\s*[-\:]?\s*(.*)",line)
-                if match :
-                    possible = match.group(1).strip()
-                    if len(possible.split())<=10:
-                        founder = possible
-            if not founded_year :
-                match = re.search(r"\b(?:established|formed)\b[^0-9]{0,20}(\d{4})",line_lower)
-                if match:
-                    founded_year = match.group(1)
-            if re.search(r"(branches|departments)",line_lower) and ":" in line:
-                possible_branches = line.split(":",1)[-1].strip()
-                if "," in possible_branches :
-                    branches = [b.strip() for b in possible_branches.split(",") if b.strip()]
-                
-            if "employees" in line_lower or "staff" in line_lower:
-                match = re.search(r"(?i)(?:employees|staff)[^\d]*(\d{1,3})(?:,\d{3}|\d+)",line)
-                if match:
-                    employees = match.group(1)
-    
-        return InstitutionDetails(
-            name = institution_name,
-            founder = founder,
-            founded_year = founded_year,
-            branches = branches if branches else None,
-            number_of_employees = employees,
-            summary = summary
-    
+        # auto_suggest=False avoids unwanted redirects
+        summary = wikipedia.summary(institution, sentences=4, auto_suggest=False)
+        result = extract_institution_details(institution, summary)
+
+        # Pydantic v2:
+        print(result.model_dump_json(indent=4))
+        # If you’re on Pydantic v1, use:  print(result.json(indent=4))
+
+    except wikipedia.exceptions.PageError:
+        print(f"Error: No Wikipedia page found for '{institution}'.")
+    except wikipedia.exceptions.DisambiguationError as e:
+        print(
+            f"Error: Multiple matches found. "
+            f"Try a more specific name. Options: {e.options}"
         )
     except Exception as e:
-        
-        return InstitutionDetails(
-            name = institution_name,
-            founder = None,
-            founded_year = None,
-            branches = None,
-            number_of_employees = None,
-            summary = f"Can't fetch summary due to :{str(e)}"
-        )
+        print(f"Failed to fetch Wikipedia data: {e}")
 
-if __name__=="__main__":
-    institution = input("Enter institution name")
-    result = extract_institution_details(institution)
-    print(result.model_dump_json(indent=4))
-    
+
+if __name__ == "__main__":
+    main()
