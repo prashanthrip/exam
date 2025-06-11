@@ -1,0 +1,55 @@
+import spacy 
+
+nlp = spacy.load("en_core_web_sm")
+
+IPC_SECTIONS ={
+    "302":"Section 302 :This section tells when one commits murdered will be punishment of death,life imprisonment or fine.",
+    "375":"Section 375 : This section which provision handels punishment for rape.",
+    "420":"Section 420 :This section explains punishment aganist theft,dishonesty .",
+    "124A":"section 124A :Section -whoever by words or by actions brings or tries  to bring hatred aganist government will be punished." 
+}
+
+def extract_ipc_section(user_input):
+    doc = nlp(user_input)
+    for i,token in enumerate(doc):
+        if token.like_num and token.text in user_input:
+            return token.text
+            if "section" in token:
+                if i+1<len(doc):
+                    next_token = doc[i+1]
+                    if next_token.text in user_input:
+                        return next_token.text
+    return None
+
+def detect_intent(user_input):
+    if "section" in user_input or any(sec in user_input for sec in IPC_SECTIONS.keys()):
+       return "ipc_query"
+    elif "hi" in user_input or "hello" in user_input:
+        return "greeting"
+    else:
+        return "general"
+
+def chat():
+    print("IPC Chatbot ,ask me anything about Indian Penal Code (Ex : What is Section 302)")
+
+    while True:
+        user_input = input("You:")
+
+        if user_input in ["exit","bye","quit"]:
+            print("IPC Chatbot :Goodbye")
+            break
+
+        intent = detect_intent(user_input)
+        if intent == "ipc_query":
+            section = extract_ipc_section(user_input)
+            if section :
+                print(f"IPC SECTION :{IPC_SECTIONS[section]}")
+            else:
+                print(f"Sorry ,I cant fetch :'{section}' information please provide correct information")
+        elif intent=="greeting":
+            print("IPC Chatbot :Hi ,You can ask about any indian penal code")
+        else:
+            print("Sorry ,I cant find anything about it please provide valid section")
+
+if __name__=="__main__":
+    chat()
