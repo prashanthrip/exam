@@ -1,0 +1,16 @@
+
+from transformers import pipeline
+
+summarizer = pipeline("summarization",model="facebook/bart-large-cnn")
+
+long_text=""" 
+The Hugging face transformers provide simple and consistent API for wide vwriety of modelsfor natural language processing task like text classification,summarization etc,One of the 
+key feacture of this is abstraction ,it allows users to perform this operation in fewer lines of code .Summarization is the process of shorting the long text while keeping key information and overall information
+The hugging face provides several fine tuned models for summarization leke BART and T5 ,This models can be retrived frpm summarization pipeline and used in variety of applications like news aggregation
+"""
+
+summary = summarizer(long_text,max_length=200,min_length=50,do_sample='false')
+
+print("Summary :",summary[0]['summary_text'])
+
+
