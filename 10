@@ -1,55 +1,43 @@
-import spacy 
+
+
+import spacy
+
 
 nlp = spacy.load("en_core_web_sm")
 
-IPC_SECTIONS ={
-    "302":"Section 302 :This section tells when one commits murdered will be punishment of death,life imprisonment or fine.",
-    "375":"Section 375 : This section which provision handels punishment for rape.",
-    "420":"Section 420 :This section explains punishment aganist theft,dishonesty .",
-    "124A":"section 124A :Section -whoever by words or by actions brings or tries  to bring hatred aganist government will be punished." 
+
+IPC_SECTIONS = {
+    "302": "Section 302 IPC: Punishment for murder. Death or life imprisonment, and fine.",
+    "375": "Section 375 IPC: Rape. Defines what constitutes rape.",
+    "420": "Section 420 IPC: Cheating and dishonestly inducing delivery of property.",
+    "376": "Section 376 IPC: Punishment for rape. Minimum 10 years imprisonment, up to life, and fine.",
+    "124A": "Section 124A IPC: Sedition. Punishment for inciting hatred against the Government."
 }
 
-def extract_ipc_section(user_input):
-    doc = nlp(user_input)
-    for i,token in enumerate(doc):
-        if token.like_num and token.text in user_input:
+
+def extract_ipc_section(text):
+    doc = nlp(text.lower())
+    for i, token in enumerate(doc):
+        if token.text in IPC_SECTIONS:
             return token.text
-            if "section" in token:
-                if i+1<len(doc):
-                    next_token = doc[i+1]
-                    if next_token.text in user_input:
-                        return next_token.text
+        if token.text == "section" and i + 1 < len(doc) and doc[i + 1].text in IPC_SECTIONS:
+            return doc[i + 1].text
     return None
 
-def detect_intent(user_input):
-    if "section" in user_input or any(sec in user_input for sec in IPC_SECTIONS.keys()):
-       return "ipc_query"
-    elif "hi" in user_input or "hello" in user_input:
-        return "greeting"
-    else:
-        return "general"
 
 def chat():
-    print("IPC Chatbot ,ask me anything about Indian Penal Code (Ex : What is Section 302)")
-
+    print("IPC Chatbot: Ask about any IPC section (e.g., 'Section 302') or type 'exit' to quit.")
     while True:
-        user_input = input("You:")
-
-        if user_input in ["exit","bye","quit"]:
-            print("IPC Chatbot :Goodbye")
+        user_input = input("You: ").lower()
+        if user_input in ['exit', 'quit', 'bye']:
+            print("IPC Chatbot: Goodbye!")
             break
-
-        intent = detect_intent(user_input)
-        if intent == "ipc_query":
-            section = extract_ipc_section(user_input)
-            if section :
-                print(f"IPC SECTION :{IPC_SECTIONS[section]}")
-            else:
-                print(f"Sorry ,I cant fetch :'{section}' information please provide correct information")
-        elif intent=="greeting":
-            print("IPC Chatbot :Hi ,You can ask about any indian penal code")
+        section = extract_ipc_section(user_input)
+        if section:
+            print(f"IPC Chatbot: {IPC_SECTIONS[section]}")
+        elif "hello" in user_input or "hi" in user_input:
+            print("IPC Chatbot: Hi! Ask about an IPC section.")
         else:
-            print("Sorry ,I cant find anything about it please provide valid section")
+            print("IPC Chatbot: Please specify an IPC section like 'Section 420'.")
 
-if __name__=="__main__":
-    chat()
+chat()
